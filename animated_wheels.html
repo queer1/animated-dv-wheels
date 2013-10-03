@@ -1,0 +1,209 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>Rotating Overlay Test</title>
+</head>
+<body>
+<section>
+<div id="CanvasMaster" style="position:relative; height:785px; width:580px">
+	<canvas id="layer1"
+		style="z-index: 1;
+		position:absolute;
+		left:0px;
+		top:0px;"
+		height="785px"; width="580px">
+		This text is displayed if your browser does not support HTML5 Canvas.
+	</canvas>
+
+	<canvas id="layer2"
+		style="z-index: 2;
+		position:absolute;
+		left:0px;
+		top:0px;" 
+		height="785px" width="580px">
+		This text is displayed if your browser does not support HTML5 Canvas.
+	</canvas>
+</div>
+
+<div id="CanvasZoom" style="position:relative; height:350px; width:350px">
+	<canvas id="zoom1"
+		style="z-index: 1;
+		position:fixed;
+		right:5px;
+		top:120px;"
+		height="350px"; width="350px">
+		This text is displayed if your browser does not support HTML5 Canvas.
+	</canvas>
+
+
+<script type="text/javascript">
+
+//major thanks to www.elated.com/articles/snazzy-pie-chart-html5-jquery for the awesome tutorial!
+
+var layer1;
+var layer2;
+var layerzoom;
+
+var ctx1;
+var ctx2;
+var ctxzoom;
+
+var x = 580;
+var y = 785;
+var WIDTH = 580;
+var HEIGHT = 785;
+var	centerx=282;
+var	centery=438;
+var radius = (WIDTH/2);
+var wheel = new Image();
+var div = document.getElementById("CanvasMaster");	
+	
+	/*  This circle has 8 slices, objects rather than using incrementing variables and a loop 
+	 *  because not sure all that I'll do with them at this point and want maximum flexibility to do whatever I want
+	 *  with each individual segment -- animations may differ. 
+	 *  The first slice start at 12 o'clock. I've added a little buffer space.
+	*/
+			
+	function slice (startradian, endradian, viewingX, viewingY, viewingPolar){
+		this.startradian = startradian;
+		this.endradian = endradian;
+		
+		if(viewingX)
+		this.viewingX = viewingX;
+		else
+		this.viewingX=0;
+		
+		if(viewingX)
+		this.viewingY = viewingY;
+		else
+		this.viewingY=0;
+		
+		if(viewingPolar)
+		this.viewingPolar = viewingPolar;
+		else
+		this.viewingPolar=0;
+	}
+	
+	var slice1 = new slice (1.26 * Math.PI,((3 * Math.PI)/2)-0.05, 141, 214, 4.15);
+	var slice2 = new slice (((3 * Math.PI)/2)+0.02,((3.5*Math.PI)/2)-0.05, 225, 232, 4.4);
+	var slice3 = new slice (((3.5*Math.PI)/2)+0.02,(2*Math.PI)-0.05, 341, 283, 5.07);
+	var slice4 = new slice (0.02, (Math.PI/4)-0.05, 323, 408, 5.65);
+	var slice5 = new slice ((Math.PI/4)+0.02, (Math.PI/2)-0.05, 262, 503, 1.86);
+	var slice6 = new slice ((Math.PI/2)+0.02, (Math.PI*0.75)-0.05, 135, 502, 2.73);
+	var slice7 = new slice ((Math.PI*0.75)+0.02, (Math.PI)-0.05, 27, 404, 3.27);
+	var slice8 = new slice (1.04 * Math.PI, 1.24 * Math.PI, 45, 284, 3.71);
+	
+	
+	var slices = [slice1, slice2, slice3, slice4, slice5, slice6, slice7, slice8];
+	
+
+function init() {		
+	
+	wheel.src ="wheel.jpg";
+	layer1 = document.getElementById("layer1");
+	ctx1 = layer1.getContext("2d");
+	
+	layer2 = document.getElementById("layer2");
+	ctx2 = layer2.getContext("2d");
+	
+	layerzoom = document.getElementById("zoom1");
+	ctxzoom = layerzoom.getContext("2d");
+	
+	setInterval(drawAll, 20);
+
+}
+
+function drawAll() {
+	draw1();
+}
+
+function draw1() {	
+	ctx1.drawImage(wheel, 0, 0);
+}
+
+div.addEventListener("mousemove", function doChartClick(event){
+	
+	clickEvent=event;
+
+	var mouseX = clickEvent.pageX - this.offsetLeft;
+	var mouseY = clickEvent.pageY - this.offsetTop;
+	
+	var xFromCenter = mouseX - centerx;
+    var yFromCenter = mouseY - centery;
+	
+	var distanceFromCenter = Math.sqrt( Math.pow( Math.abs( xFromCenter ), 2 ) + Math.pow( Math.abs( yFromCenter ), 2 ) );
+
+    if (distanceFromCenter <= radius) {
+      
+	  // Here we get the radian of the mouse.
+	  
+		var moveAngle = Math.atan2( yFromCenter, xFromCenter );// - chartStartAngle, commented out because I start at 0.
+
+		if (moveAngle < 0) moveAngle = 2 * Math.PI + moveAngle;
+			console.log("move angle:", moveAngle);
+			console.log("move coord:", mouseX, mouseY); 	
+	  
+		for(var i=0; i<slices.length; i++) {			
+			if (moveAngle >= slices[i].startradian && moveAngle <= slices[i].endradian) {				
+				toggleSlice(slices[i], mouseX, mouseY)	
+			}
+		}	  	
+	}
+});
+
+function toggleSlice(slice, mouseX, mouseY){
+
+	var windowWidth = 200;
+	var windowHeight = 200;
+	var windowX = 0;
+	var windowY = 0;
+	
+	/*
+	 * This conversation back to x/y coords isn't working, will debug later
+	var radiancenter=(slice.startradian+slice.endradian)/2;
+	
+	var mX = (radius)* Math.sqrt(Math.cos(radiancenter)*Math.cos(radiancenter))+div.offsetLeft;
+	var mY = (radius)* Math.sqrt(Math.sin(radiancenter)*Math.sin(radiancenter))+div.offsetTop;
+	console.log("polar convert mx:", mX);
+	console.log("polar convert my:", mY);	
+	*/	
+
+	windowX=slice.viewingX;
+	windowY=slice.viewingY;
+	
+	/*this is computationally expensive, so should add a "flip switch" so it only runs when mouse 
+	* moves to a new slice, not every time mouse moves!
+	*/
+	
+	//wipe ctx2
+	ctx2.clearRect(0,0,WIDTH,HEIGHT);	
+	
+	//set transparency
+	ctx2.globalAlpha=0.4;
+	//draw
+	ctx2.fillStyle = "#FF0000";
+	ctx2.strokeStyle= "#FF0000";
+	ctx2.lineWidth=6;
+	ctx2.lineCap="round";
+	ctx2.beginPath();
+	ctx2.arc(centerx, centery, radius-60, slice.startradian, slice.endradian);
+	ctx2.closePath();
+	ctx2.fill();	
+	ctx2.beginPath();
+	ctx2.moveTo(centerx, centery);
+	ctx2.lineTo(mouseX, mouseY);
+	ctx2.stroke();
+	  
+	//zoom image, where to copy FROM image, size of window to copy to, copy to where in window, scale image to what size
+	//maybe want to fade this in or do something else cooler with it in the future
+	  
+	ctxzoom.drawImage(wheel, windowX, windowY, windowWidth, windowHeight, 0, 0, 275, 275);
+}
+
+init();
+
+</script>
+</section>
+</body>
+</html>
